@@ -1,0 +1,57 @@
+# Dokumentasi Proyek Batch Processing dengan PySpark dan Airflow
+
+## 1. Alur Kerja DAG Airflow
+
+### 1.1. **Deskripsi DAG**
+- **DAG (Directed Acyclic Graph)** adalah representasi dari alur kerja yang berisi serangkaian *tasks* yang saling bergantung dan berjalan secara berurutan atau paralel. Pada proyek ini, DAG digunakan untuk mengotomatisasi proses **Batch Processing** menggunakan **PySpark**.
+- Proses dimulai dengan membaca data yang telah dibersihkan (dari file CSV atau PostgreSQL), kemudian melakukan transformasi (agregasi dan analisis), dan akhirnya menyimpan hasilnya ke dalam PostgreSQL atau file CSV.
+- **Jadwal Eksekusi DAG**: DAG dijadwalkan untuk dieksekusi setiap hari (`@daily`).
+
+### 1.2. **Alur Kerja DAG**
+DAG Airflow pada proyek ini berisi satu task utama yaitu **ETL Task**, yang terdiri dari 3 tahapan utama:
+1. **Extract**: Membaca data yang telah dibersihkan.
+2. **Transform**: Melakukan agregasi atau analisis batch terhadap data.
+3. **Load**: Menyimpan hasil analisis ke dalam PostgreSQL atau file CSV.
+
+- **Task 1**: Membaca data dari file CSV atau PostgreSQL menggunakan PySpark.
+- **Task 2**: Melakukan agregasi data menggunakan PySpark, menghitung jumlah total per negara.
+- **Task 3**: Menyimpan hasil analisis ke file CSV atau database PostgreSQL.
+
+### 1.3. **Struktur DAG**
+```python
+from airflow import DAG
+from airflow.operators.python_operator import PythonOperator
+from pyspark.sql import SparkSession
+from datetime import datetime
+
+def run_pyspark_etl():
+    # Membuat session Spark
+    spark = SparkSession.builder \
+        .appName("ETL_Process") \
+        .config("spark.jars", "C:\\Users\\arel\\Desktop\\pgjdbc-REL42.7.7.jar")
+        .getOrCreate()
+
+    # Extract: Membaca data yang telah dibersihkan
+    df = spark.read.csv("C:\Users\arel\Documents\Bootcamp\Bootcamp_Data_Engineering_Batch_10_dibimbing_id\Batch_Processing_with_PySpark\dibimbing_spark_airflow\data\online-retail-dataset.csv\cleaned_data.csv", header=True, inferSchema=True)
+
+    # Transform: Agregasi dan analisis data
+    transformed_df = df.groupBy("Country").sum("Quantity")
+
+    # Load: Menyimpan hasil analisis ke file CSV atau PostgreSQL
+    transformed_df.write.csv("C:\Users\arel\Documents\Bootcamp\Bootcamp_Data_Engineering_Batch_10_dibimbing_id\Batch_Processing_with_PySpark\dibimbing_spark_airflow\data\online-retail-dataset.csv\output.csv")
+
+# Mendefinisikan DAG
+dag = DAG(
+    'batch_processing_dag',
+    description='DAG untuk proses batch dengan PySpark',
+    schedule_interval='@daily',  # Menjadwalkan eksekusi harian
+    start_date=datetime(2025, 6, 12),
+    catchup=False,
+)
+
+# Mendefinisikan task ETL
+etl_task = PythonOperator(
+    task_id='run_etl_task',
+    python_callable=run_pyspark_etl,
+    dag=dag,
+)

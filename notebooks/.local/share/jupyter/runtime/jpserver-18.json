@@ -1,0 +1,13 @@
+{
+  "base_url": "/",
+  "hostname": "0.0.0.0",
+  "password": false,
+  "pid": 18,
+  "port": 8888,
+  "root_dir": "/home/jovyan",
+  "secure": false,
+  "sock": "",
+  "token": "13ab8dbcb4656fbff248af1ae8e287d09a0a455e5c2be823",
+  "url": "http://dibimbing-jupyter:8888/",
+  "version": "2.5.0"
+}
